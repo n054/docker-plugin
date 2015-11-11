@@ -26,9 +26,10 @@ type driver struct {
 	version    string
 	nameserver string
 	watcher    Watcher
+	scope      string
 }
 
-func New(version string, nameserver string) (skel.Driver, error) {
+func New(version, nameserver, scope string) (skel.Driver, error) {
 	client, err := docker.NewClient("unix:///var/run/docker.sock")
 	if err != nil {
 		return nil, errorf("could not connect to docker: %s", err)
@@ -46,6 +47,7 @@ func New(version string, nameserver string) (skel.Driver, error) {
 		nameserver: nameserver,
 		version:    version,
 		watcher:    watcher,
+		scope:      scope,
 	}, nil
 }
 
@@ -56,11 +58,10 @@ func errorf(format string, a ...interface{}) error {
 
 // === protocol handlers
 
-var caps = &api.GetCapabilityResponse{
-	Scope: "global",
-}
-
 func (driver *driver) GetCapabilities() (*api.GetCapabilityResponse, error) {
+	var caps = &api.GetCapabilityResponse{
+		Scope: driver.scope,
+	}
 	Log.Debugf("Get capabilities: responded with %+v", caps)
 	return caps, nil
 }
